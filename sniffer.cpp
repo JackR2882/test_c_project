@@ -12,7 +12,21 @@
 #include <iostream>
 #include <pcap.h>
 
-int main() {
+
+
+void handle_packet(u_char *useless,
+                const struct pcap_pkthdr* pkthdr,
+                const u_char* packet)
+{
+    static int count = 1;
+    std::cout << "Packet " << count << ": ";
+    std::cout << "Successfully captured a packet of length: " << pkthdr[count-1].len << '\n';
+    count++;
+}
+
+
+int main()
+{
 
     char *dev;
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -38,10 +52,17 @@ int main() {
     }
 
 
-    /* Grab a packet */
+    /* grab a packet */
     packet = pcap_next(handle, &header);
     std::cout << "Successfully captured a packet of length: " << header.len << '\n';
-    /* Close the session */
+    /* close the session */
+    //pcap_close(handle);
+
+    /* repeatedly grab a packet (25 times) */
+    pcap_loop(handle, 25, handle_packet, NULL);
+
+
+    /* close the session */
     pcap_close(handle);
 
     return(0);
