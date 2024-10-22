@@ -61,10 +61,19 @@ void handle_packet(u_char *args,
     
     u_int16_t type = handle_ethernet(args, pkthdr, packet);
 
-    if(type== ETHERTYPE_IP)
+    if(type==ETHERTYPE_IP)
     {
         handle_IP(args, pkthdr, packet);
     }
+    else if (type==ETHERTYPE_ARP)
+    {
+        /* handle arp packet */
+    }
+    else if (type==ETHERTYPE_REVARP)
+    {
+        /* handle reverse arp packet */
+    }
+    
 
     static int count = 1;
     std::cout << "Packet " << count << ": ";
@@ -152,13 +161,16 @@ u_int16_t handle_ethernet(u_char *args, const struct pcap_pkthdr* pkthdr, const 
     if (ether_type == ETHERTYPE_IP)
     {
         std::cout << "(IP)\n";
-    } else if (ether_type == ETHERTYPE_ARP)
+    }
+    else if (ether_type == ETHERTYPE_ARP)
     {
         std::cout << "(ARP)\n";
-    } else if (eptr->ether_type == ETHERTYPE_REVARP)
+    }
+    else if (eptr->ether_type == ETHERTYPE_REVARP)
     {
         std::cout << "(RARP)\n";
-    } else
+    }
+    else
     {
         std::cout << "(?)\n";
     }
