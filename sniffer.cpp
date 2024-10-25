@@ -102,13 +102,17 @@ void handle_packet(u_char *args,
                 const u_char* packet)
 {
     
-    
+    //static int count = 1;
+    //std::cout << "Packet " << count << ": ";
+    //std::cout << "Successfully captured a packet of length: " << pkthdr[count-1].len << '\n';
+    //count++;
+
     u_int16_t type = handle_ethernet(args, pkthdr, packet);
 
     if(type==ETHERTYPE_IP)
     {
-        std::cout << "FIX ME" << '\n'; // causes a seg fault if I remove it?
-        //handle_IP(args, pkthdr, packet);
+        std::cout << ""; // causes a seg fault if removed - NEEDS FIXING
+        handle_IP(args, pkthdr, packet);
     }
     else if (type==ETHERTYPE_ARP)
     {
@@ -119,12 +123,6 @@ void handle_packet(u_char *args,
     {
         /* handle reverse arp packet */
     }
-    
-
-    static int count = 1;
-    std::cout << "Packet " << count << ": ";
-    std::cout << "Successfully captured a packet of length: " << pkthdr[count-1].len << '\n';
-    count++;
 
 }
 
@@ -189,11 +187,13 @@ u_char* handle_IP(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* 
     off = ntohs(ip->ip_off);
     if((off & 0x1fff) == 0)
     {
-        std::cout << "IP: " << inet_ntoa(ip->ip_src) << '\n';
-        std::cout << "Header length: " << hlen << '\n';
-        std::cout << "Version: " << version << '\n';
-        std::cout << "Offset? " << off << '\n';
+        std::cout   << "IP: " << inet_ntoa(ip->ip_src) << ", "
+                    << "Header length: " << hlen << ", "
+                    << "Version: " << version << ", "
+                    << "Offset? " << off << '\n';
     }
+
+    //std::cout << "Protocol: " << ip->ip_p << '\n';
 
     return(NULL);    
 
