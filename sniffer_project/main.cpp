@@ -106,7 +106,14 @@ void read_packet(u_char *args,
         std::cout << "Bytes avaialable: " << pkthdr->caplen << " | ";
         std::cout << "Expected packet size: " << pkthdr->len << '\n';
 
-        /* Pointers to various headers */
+
+        /* variables to store transport layer information */
+        int s_port = 0;
+        int d_port = 0;
+        int c_length = 0;
+        std::string proto = "";
+
+        /* pointers to various headers */
         const u_char *ip_hdr;
         const u_char *tcp_hdr;
         const u_char *udp_hdr;
@@ -117,7 +124,9 @@ void read_packet(u_char *args,
         int tcp_hdr_len;
         int payload_len;
 
-        ip_hdr = packet + ether_hdr_len; /* update ip header pointer */
+
+        /* update ip header pointer */
+        ip_hdr = packet + ether_hdr_len;
         ip_hdr_len = ((*ip_hdr) & 0x0F);
         ip_hdr_len = ip_hdr_len * 4;
         std::cout << "IP header length (IHL) in bytes: " << ip_hdr_len << '\n';
@@ -149,43 +158,15 @@ void read_packet(u_char *args,
             std::cout << "Destination port: " << ntohs(tcp->dst_port) << '\n';
 
 
-
             int content_length;
             content_length = pkthdr->caplen - (ether_hdr_len + ip_hdr_len + tcp_hdr_len);
             std::cout << "Payload size: " << content_length << '\n';
 
 
-            /* 
-             * Current output format:
-
-             * << source IP,
-             * destination IP,
-             * protocol (TCP/UDP),
-             * source port,
-             * destination port,
-             * content length,
-             * timestamp >>
-             */
-
-            std::cout << "Writing: << " << inet_ntoa(ip->ip_src) << ','
-                                        << inet_ntoa(ip->ip_dst) << ','
-                                        << "TCP" << ','
-                                        << ntohs(tcp->src_port) << ','
-                                        << ntohs(tcp->dst_port) << ','
-                                        << content_length << ','
-                                        << ts << " >>\n";
-            /* Dont bother converting port numbers to protocols, will be able to do that later. */
-
-            /* write CSV output */
-            /*write_file  << inet_ntoa(ip->ip_src) << ','
-                        << inet_ntoa(ip->ip_dst) << ','
-                        << "TCP" << ','
-                        << ntohs(tcp->src_port) << ','
-                        << ntohs(tcp->dst_port) << ','
-                        << content_length << ','
-                        << ts << ','
-                        << '\n';
-            */
+            s_port = ntohs(tcp->src_port);
+            d_port = ntohs(tcp->dst_port);
+            c_length = content_length;
+            proto = "TCP";
 
 
         }
@@ -207,31 +188,34 @@ void read_packet(u_char *args,
             content_length = pkthdr->caplen - (ether_hdr_len + ip_hdr_len + ntohs(udp->length));
             std::cout << "Payload size: " << content_length << '\n';
 
-            std::cout << "Writing: << " << inet_ntoa(ip->ip_src) << ','
-                      << inet_ntoa(ip->ip_dst) << ','
-                      << "UDP" << ','
-                      << ntohs(udp->src_port) << ','
-                      << ntohs(udp->dst_port) << ','
-                      << content_length << ','
-                      << ts << " >>\n";
-            /* Dont bother converting port numbers to protocols, will be able to do that later. */
-
-            /* write CSV output */
-            /*write_file  << inet_ntoa(ip->ip_src) << ','
-                        << inet_ntoa(ip->ip_dst) << ','
-                        << "UDP" << ','
-                        << ntohs(udp->src_port) << ','
-                        << ntohs(udp->dst_port) << ','
-                        << content_length << ','
-                        << ts << ','
-                        << '\n';
-            */
+            s_port = ntohs(udp->src_port);
+            d_port = ntohs(udp->dst_port);
+            c_length = content_length;
+            proto = "TCP";
 
         }
         else
         {
             std::cout << "<UNSUPPORTED PROTOCOL: " << protocol << ")\n";
+            return;
         }
+
+        std::cout   << "Writing: << " << inet_ntoa(ip->ip_src) << ','
+                    << inet_ntoa(ip->ip_dst) << ','
+                    << proto << ','
+                    << s_port << ','
+                    << d_port << ','
+                    << c_length << ','
+                    << ts << " >>\n";
+
+        write_file  << inet_ntoa(ip->ip_src) << ','
+                    << inet_ntoa(ip->ip_dst) << ','
+                    << proto << ','
+                    << ntohs(s_port) << ','
+                    << ntohs(d_port) << ','
+                    << c_length << ','
+                    << ts << ','
+                    << '\n';
 
 
 
