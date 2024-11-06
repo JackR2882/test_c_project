@@ -52,8 +52,17 @@ struct my_tcp {
     u_int16_t src_port;
     u_int16_t dst_port;
     u_int32_t seq; /* sequence number */
+    u_int32_t ack;
     u_int8_t not_sure; /* fix this later */
-    u_int8_t not_sure_2; /* fix this later */
+    u_int8_t flags; /* fix this later */
+#define CWR 0x80;
+#define ECE 0x40;
+#define URG 0x20;
+#define ACK 0x10;
+#define PSH 0x8;
+#define RST 0x4;
+#define SYN 0x2;
+#define FIN 0x1;
     u_int16_t window;
     u_int16_t checksum;
     u_int16_t urgent_pointer;
@@ -112,6 +121,7 @@ void read_packet(u_char *args,
         int d_port = 0;
         int c_length = 0;
         std::string proto = "";
+        std::string tcp_flag = "";
 
         /* pointers to various headers */
         const u_char *ip_hdr;
@@ -168,6 +178,48 @@ void read_packet(u_char *args,
             c_length = content_length;
             proto = "TCP";
 
+            /* ntohs only works for 16 bit (2 byte) data, for 8 bit (sngle byte) data use unsigned */
+            std::cout << "Flag: " << unsigned(tcp->flags) << '\n';
+
+            switch(unsigned(tcp->flags))
+            {
+                case 1:
+                    std::cout << "FIN\n"; tcp_flag = "FIN"; break;
+                case 2:
+                    std::cout << "SYN\n"; tcp_flag = "SYN"; break;
+                case 4:
+                    std::cout << "RST\n"; tcp_flag = "RST"; break;
+                case 8:
+                    std::cout << "PSH\n"; tcp_flag = "PSH"; break;
+                case 16:
+                    std::cout << "ACK\n"; tcp_flag = "ACK"; break;
+                case 32:
+                    std::cout << "URG\n"; tcp_flag = "URG"; break;
+                case 64:
+                    std::cout << "ECE\n"; tcp_flag = "ECE"; break;
+                case 128:
+                    std::cout << "CWR\n"; tcp_flag = "CWR"; break;
+                
+            }
+
+            //if (tcp->flags == CWR) { std::cout << "CWR"; }
+
+            // 128>CWR, 64>ECE, 32>URG, 16>ACK, 8>PSH, 4>RST, 2>SYN, 1>FIN
+            
+
+            
+            /*
+            #define CWR 0x80;
+            #define ECE 0x40;
+            #define URG 0x20;
+            #define ACK 0x10;
+            #define PSH 0x8;
+            #define RST 0x4;
+            #define SYN 0x2;
+            #define FIN 0x1;
+            */
+
+
 
         }
         else if (protocol == IPPROTO_UDP)
@@ -191,7 +243,7 @@ void read_packet(u_char *args,
             s_port = ntohs(udp->src_port);
             d_port = ntohs(udp->dst_port);
             c_length = content_length;
-            proto = "TCP";
+            proto = "UDP";
 
         }
         else
@@ -206,7 +258,9 @@ void read_packet(u_char *args,
                     << s_port << ','
                     << d_port << ','
                     << c_length << ','
-                    << ts << " >>\n";
+                    << ts << ','
+                    << tcp_flag << ','
+                    << " >>\n";
 
         write_file  << inet_ntoa(ip->ip_src) << ','
                     << inet_ntoa(ip->ip_dst) << ','
@@ -215,10 +269,8 @@ void read_packet(u_char *args,
                     << ntohs(d_port) << ','
                     << c_length << ','
                     << ts << ','
+                    << tcp_flag << ','
                     << '\n';
-
-
-
 
     }
     else if (eth_type == ETHERTYPE_ARP)
@@ -274,7 +326,7 @@ int main()
     /* open output file */
     write_file.open(output_file);
     /* output column titles */
-    write_file << "Source-IP,Destination-IP,Protocol,Source-Port,Destination-Port,Content-Length,Timestamp,\n";
+    write_file << "Source-IP,Destination-IP,Protocol,Source-Port,Destination-Port,Content-Length,Timestamp,TCP-Flag\n";
 
 
     /* repeatedly grab a packet (5 times) */
