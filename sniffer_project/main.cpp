@@ -55,14 +55,6 @@ struct my_tcp {
     u_int32_t ack;
     u_int8_t not_sure; /* fix this later */
     u_int8_t flags; /* fix this later */
-#define CWR 0x80;
-#define ECE 0x40;
-#define URG 0x20;
-#define ACK 0x10;
-#define PSH 0x8;
-#define RST 0x4;
-#define SYN 0x2;
-#define FIN 0x1;
     u_int16_t window;
     u_int16_t checksum;
     u_int16_t urgent_pointer;
@@ -178,9 +170,8 @@ void read_packet(u_char *args,
             c_length = content_length;
             proto = "TCP";
 
-            /* ntohs only works for 16 bit (2 byte) data, for 8 bit (sngle byte) data use unsigned */
-            std::cout << "Flag: " << unsigned(tcp->flags) << '\n';
-
+            // parse tcp flag
+            std::cout << "Flag: ";
             switch(unsigned(tcp->flags))
             {
                 case 1:
@@ -201,25 +192,6 @@ void read_packet(u_char *args,
                     std::cout << "CWR\n"; tcp_flag = "CWR"; break;
                 
             }
-
-            //if (tcp->flags == CWR) { std::cout << "CWR"; }
-
-            // 128>CWR, 64>ECE, 32>URG, 16>ACK, 8>PSH, 4>RST, 2>SYN, 1>FIN
-            
-
-            
-            /*
-            #define CWR 0x80;
-            #define ECE 0x40;
-            #define URG 0x20;
-            #define ACK 0x10;
-            #define PSH 0x8;
-            #define RST 0x4;
-            #define SYN 0x2;
-            #define FIN 0x1;
-            */
-
-
 
         }
         else if (protocol == IPPROTO_UDP)
